@@ -1,7 +1,10 @@
 import './style.css'
 import * as THREE from 'three';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { computeTangentsForNonIndexed } from './utils'
 import fragmentShader from './shaders/fragment.glsl'
 import vertexShader from './shaders/vertex.glsl'
 import CustomShaderMaterial from 'three-custom-shader-material/vanilla'
@@ -24,6 +27,8 @@ renderer.setClearColor(0x050505)
 const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,1,1000)
 camera.position.z = 5
 
+const controls = new OrbitControls(camera,canvas)
+
 
 const Manager = new THREE.LoadingManager();
 const Draco = new DRACOLoader(Manager)
@@ -32,6 +37,7 @@ const GLB = new GLTFLoader(Manager)
 Draco.setDecoderPath('/draco/')
 Draco.setDecoderConfig({type: 'wasm'})
 GLB.setDRACOLoader(Draco)
+
 
 
 const material = new THREE.MeshPhysicalMaterial({
@@ -46,23 +52,28 @@ const csm = new CustomShaderMaterial({
   fragmentShader,
   uniforms:{
     uTime:{value:0},
-    PositionFactor:{value:1},
-    OutputFactor:{value:1},
+    PositionFactor:{value:.5},
+    OutputFactor:{value:15},
+    DisplaceFactor:{value:2},
     Speed:{value:1},
   }
 })
 
 const Blob = new THREE.Mesh(
-  new THREE.IcosahedronGeometry(1,20),
+  new THREE.IcosahedronGeometry(2.5,100),
   csm
 )
 
+computeTangentsForNonIndexed(Blob.geometry)
 
-lil.add(Blob.material.uniforms.PositionFactor,'value').min(0).max(10).name('Position Factor')
-lil.add(Blob.material.uniforms.OutputFactor,'value').min(0).max(5).name('Output Factor')
-lil.add(Blob.material.uniforms.Speed,'value').min(0).max(5).name('Speed')
+console.log(Blob.geometry)
 
-// const tangents = THREE.BuffurGeometryUtils.computeTangents(Blob.geometry)
+
+lil.add(Blob.material.uniforms.PositionFactor,'value').min(0).max(5).name('Position Factor')
+lil.add(Blob.material.uniforms.OutputFactor,'value').min(0).max(20).name('Output Factor')
+lil.add(Blob.material.uniforms.DisplaceFactor,'value').min(0).max(10).name('Displacement Factor')
+lil.add(Blob.material.uniforms.Speed,'value').min(0).max(2).name('Speed')
+
 
 scene.add(Blob)
 
